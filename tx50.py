@@ -9,6 +9,25 @@ def get_expand_length(self, left, right, s):
         right += 1
     return right - left - 1
 
+def generate_tree(nums):
+    head = TreeNode(0)
+    queue = [head]
+    is_right = True
+    for num in nums:
+        node = queue.pop(0)
+        if num != None:
+            new_node = TreeNode(num)
+            queue.append(new_node)
+            queue.append(new_node)
+        else:
+            new_node = None
+        if is_right:
+            is_right = False
+            node.right = new_node
+        else:
+            is_right = True
+            node.left = new_node
+    return head.right
 
 class TreeNode:
     def __init__(self, x):
@@ -163,8 +182,65 @@ class Solution(object):
         right_head.next = slow                      # rihgt_head现在为新链表的左边的尾结点
         return fast                                 # 返回新的头节点
     
+    def singleNumber(self, nums) -> int:
+        '''
+        给定一个非空整数数组，除了某个元素只出现一次以外，其余每个元素均出现两次。找出那个只出现了一次的元素。
+        解法1：使用字典，遍历nums，没有这个key就添加，有就删除，根据数组的性质，最后只有一个key
+        '''
+        # dic = {}
+        # for num in nums:
+        #     if num in dic:
+        #         dic.pop(num)
+        #     else:
+        #         dic[num] = 0
+        # return dic.popitem()[0]
+        '''
+        解法2：由于 0^a = a，a^a = 0 ，
+        而数组中除了一个数字是只出现一次的，其他数字均出现两次，则可以采用此思路来解答这个问题。 
+        异或运算实际上就是不进位的加法，满足交换律
+        '''
+        res = 0
+        for num in nums:
+            res ^= num
+        return res
+
+    def lowestCommonAncestor(self, root: TreeNode, p: TreeNode, q: TreeNode) -> TreeNode:
+        '''
+        给定一个二叉搜索树, 找到该树中两个指定节点的最近公共祖先。
+        百度百科中最近公共祖先的定义为：“对于有根树 T 的两个结点 p、q，
+        最近公共祖先表示为一个结点 x，满足 x 是 p、q 的祖先且 x 的深度尽可能大（一个节点也可以是它自己的祖先）。”
+        '''
+        if p == root or q == root: return root
+        self.p = p
+        self.q = q
+        self.p_path = None
+        self.q_path = None
+        self.get_node_path(root, [-1])      # 遍历整棵树取得p和q的路径
+        ancestor = root                     # 祖先节点先初始化为根节点
+        depth = min(len(self.p_path), len(self.q_path))
+        for i in range(1, depth):
+            if self.p_path[i] == self.q_path[i]:        # 路径为0则往左走，1则往右走
+                ancestor = ancestor.right if self.p_path[i] else ancestor.left
+            else:  
+                break       # 两者路径不相等说明从上一个节点已经分叉了，跳出循环返回上一个节点
+        return ancestor
+
+    def get_node_path(self, root, path):
+        if root == self.p:
+            self.p_path = path.copy()
+        elif root == self.q:
+            self.q_path = path.copy()
+        if root.left:
+            path.append(0)
+            self.get_node_path(root.left, path)
+        if root.right:
+            path.append(1)
+            self.get_node_path(root.right, path)
+        path.pop()
 
 if __name__ == "__main__":
     so = Solution()
     print(so)
-    #print(so.reverseWords("Let's take LeetCode contest"))
+    root = generate_tree([6,2,8,0,4,7,9,None,None,3,5])
+    node = so.lowestCommonAncestor(root, root.left, root.left.right)
+    print(node.val)
