@@ -77,5 +77,4 @@ def crt_sieving(mods, remainders):
 
 
 if __name__ == "__main__":
-    results = Solution().insert(intervals = [[1,2],[3,5],[6,7],[8,10],[12,16]], newInterval = [4,8])
-    print(results)
+    pass

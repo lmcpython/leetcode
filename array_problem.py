@@ -54,4 +54,3 @@ class Solution:
 
 if __name__ == "__main__":
     so = Solution()
-    print(so.threeSum([-1,0,1,2,-1,-4]))

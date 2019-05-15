@@ -115,14 +115,4 @@ class Solution:
         return head.next
 
 if __name__ == "__main__":
-    so = Solution()
-    a = [4,2,1,3]
-    head = NodeList(0)
-    x = head
-    for i in a:
-        node = NodeList(i)
-        x.next = node
-        x = x.next
-    
-    result = so.sortList(head.next)
-    print()
+    pass
