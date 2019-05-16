@@ -1,15 +1,24 @@
-def traverse_tree(node):
-    left_depth = 0 if not node.left else traverse_tree(node.left)
-    right_depth = 0 if not node.right else traverse_tree(node.right)
+def traverseTree(node):
+    '''
+    遍历二叉树，返回最大深度
+    '''
+    left_depth = 0 if not node.left else traverseTree(node.left)
+    right_depth = 0 if not node.right else traverseTree(node.right)
     return max(left_depth, right_depth) + 1
 
-def get_expand_length(self, left, right, s):
+def getExpandLength(left, right, s):
+    '''
+    中心展开求回文字符串长度
+    '''
     while left >= 0 and right < len(s) and s[left] == s[right]:
         left -= 1
         right += 1
     return right - left - 1
 
-def generate_tree(nums):
+def generateTree(nums):
+    '''
+    根据数据产生一个二叉树
+    '''
     head = TreeNode(0)
     queue = [head]
     is_right = True
@@ -28,6 +37,7 @@ def generate_tree(nums):
             is_right = True
             node.left = new_node
     return head.right
+
 
 class TreeNode:
     def __init__(self, x):
@@ -87,8 +97,8 @@ class Solution(object):
         if len(s) < 2: return s
         start = end = 0
         for i in range(len(s)):
-            len1 = get_expand_length(i, i, s)
-            len2 = get_expand_length(i, i+1, s)
+            len1 = getExpandLength(i, i, s)
+            len2 = getExpandLength(i, i+1, s)
             maxlen = max(len1, len2)
             if maxlen > end - start:
                 start = i - (maxlen-1) // 2
@@ -109,7 +119,7 @@ class Solution(object):
         '''
         给定一个二叉树，找出其最大深度。二叉树的深度为根节点到最远叶子节点的最长路径上的节点数。
         '''
-        return traverse_tree(root) if root else 0
+        return traverseTree(root) if root else 0
         
     def canWinNim(self, n: int) -> bool:
         '''
@@ -146,7 +156,7 @@ class Solution(object):
         # lis.pop()
         # return ''.join(lis)
         '''
-        两次翻转，第一个分割成单词组后逆转单词之间的顺序（单词本身没变）
+        两次翻转，第一个分割成词组后逆转词组的顺序（单词本身没变）
         然后以空格连接再整个翻转
         '''
         return ' '.join(s.split(' ')[::-1])[::-1]
@@ -210,37 +220,147 @@ class Solution(object):
         百度百科中最近公共祖先的定义为：“对于有根树 T 的两个结点 p、q，
         最近公共祖先表示为一个结点 x，满足 x 是 p、q 的祖先且 x 的深度尽可能大（一个节点也可以是它自己的祖先）。”
         '''
-        if p == root or q == root: return root
-        self.p = p
-        self.q = q
-        self.p_path = None
-        self.q_path = None
-        self.get_node_path(root, [-1])      # 遍历整棵树取得p和q的路径
-        ancestor = root                     # 祖先节点先初始化为根节点
-        depth = min(len(self.p_path), len(self.q_path))
-        for i in range(1, depth):
-            if self.p_path[i] == self.q_path[i]:        # 路径为0则往左走，1则往右走
-                ancestor = ancestor.right if self.p_path[i] else ancestor.left
-            else:  
-                break       # 两者路径不相等说明从上一个节点已经分叉了，跳出循环返回上一个节点
-        return ancestor
+        # if p == root or q == root: return root
+        # self.p = p
+        # self.q = q
+        # self.p_path = None
+        # self.q_path = None
+        # self.getNodePath(root, [-1])      # 遍历整棵树取得p和q的路径
+        # ancestor = root                     # 祖先节点先初始化为根节点
+        # depth = min(len(self.p_path), len(self.q_path))
+        # for i in range(1, depth):
+        #     if self.p_path[i] == self.q_path[i]:        # 路径为0则往左走，1则往右走
+        #         ancestor = ancestor.right if self.p_path[i] else ancestor.left
+        #     else:  
+        #         break       # 两者路径不相等说明从上一个节点已经分叉了，跳出循环返回上一个节点
+        # return ancestor
+        '''
+        因为是有序的二叉树，根据其性质，左子树的全部点都比根节点小，右子树的全部点都比根节点大。
+        所以当遇到两个点比根节点一大一小时必然分布在不同的子树上，所以根节点必然是其最近公共祖先。
+        否则根据情况将根节点设为其左节点或右节点
+        '''
+        # while (root.val - p.val)*(root.val - q.val) > 0:
+        #     root = root.left if (root.val - p.val) > 0 else root.right
+        # (result_False, result_True)[judge_condition] 更简洁的判断写法
+        while (root.val-p.val)*(root.val-q.val) > 0: root = (root.right, root.left)[q.val > root.val]
+        return root
 
-    def get_node_path(self, root, path):
+    def getNodePath(self, root, path):
+        '''
+        上一题的辅助函数，遍历整个树，实施更新当前路径，遇到是要找的节点就复制路径
+        '''
         if root == self.p:
             self.p_path = path.copy()
         elif root == self.q:
             self.q_path = path.copy()
         if root.left:
             path.append(0)
-            self.get_node_path(root.left, path)
+            self.getNodePath(root.left, path)
         if root.right:
             path.append(1)
-            self.get_node_path(root.right, path)
+            self.getNodePath(root.right, path)
         path.pop()
+
+    def majorityElement(self, nums: list) -> int:
+        '''
+        给定一个大小为 n 的数组，找到其中的众数。众数是指在数组中出现次数大于 ⌊ n/2 ⌋ 的元素。
+        你可以假设数组是非空的，并且给定的数组总是存在众数。
+        解法1：遍历
+        '''
+        # dic = {}
+        # for num in nums:
+        #     if num in dic:
+        #         dic[num] += 1
+        #     else:
+        #         dic[num] = 1
+        # half = len(nums) // 2
+        # for k, v in dic.items():
+        #     if v > half: return k
+        '''
+        设置一个current变量和cnt计数变量，current==num时cnt++否则cnt--，当cnt=0时，current改为num，cnt重置1。
+        因为众数的数量比其他数的总和还多，所以即使相互抵消，最后剩下的也还是众数。
+        '''
+        current, cnt = 0, 0
+        for num in nums:
+            if cnt == 0:
+                current = num
+                cnt = 1
+            elif current == num:
+                cnt += 1
+            else:
+                cnt -= 1
+        return current
+
+    def isPalindrome(self, x: int) -> bool:
+        '''
+        判断一个整数是否是回文数。回文数是指正序（从左向右）和倒序（从右向左）读都是一样的整数。
+        示例 2:     输入: -121      输出: false
+        解释: 从左向右读, 为 -121 。 从右向左读, 为 121- 。因此它不是一个回文数。
+        示例 3:     输入: 10        输出: false
+        解释: 从右向左读, 为 01 。因此它不是一个回文数。
+        '''
+        # return str(x) == str(x)[::-1]     # 转换字符串方法
+        '''
+        解法2：翻转后半部分与前半部分比较
+        '''
+        if x < 0 or (x >= 10 and x % 10 == 0): return False
+        if x < 10: return True
+        second_half = 0
+        while x > second_half:
+            second_half = second_half*10+(x%10)
+            if second_half == x or second_half == (x//10): return True
+            x = x // 10
+        return False
+
+    def mergeTwoLists(self, l1: ListNode, l2: ListNode) -> ListNode:
+        '''
+        将两个有序链表合并为一个新的有序链表并返回。新链表是通过拼接给定的两个链表的所有节点组成的。 
+        示例：
+        输入：1->2->4, 1->3->4
+        输出：1->1->2->3->4->4
+        解法1：创建一个新的头结点，对比两个链表，挨个插入新链表
+        '''
+        # head = ListNode(0)
+        # cur = head
+        # while l1 and l2:
+        #     if l1.val < l2.val:
+        #         cur.next = l1
+        #         l1 = l1.next
+        #     else:
+        #         cur.next = l2
+        #         l2 = l2.next
+        #     cur = cur.next
+        # if l1:
+        #     cur.next = l1       # l2为空，直接将l1剩下部分全部接上
+        # elif l2:
+        #     cur.next = l2       # l1为空，直接将l2剩下部分全部接上
+        # return head.next
+        '''
+        解法2：与解法1类似，比较两个链表的头结点，以小的为主链表，遍历主链表，将副链表依次比较插入
+        '''
+        # if not l1: return l2
+        # if not l2: return l1
+        # if l2.val < l1.val: l2, l1 = l1, l2
+        # head = l1
+        # while l1.next:
+        #     if not l2: return head      # 副链表以空，直接返回
+        #     if l2.val <= l1.next.val:
+        #         temp = l1.next
+        #         l1.next, l2 = l2, l2.next
+        #         l1.next.next = temp
+        #     else:
+        #         l1 = l1.next
+        # l1.next = l2                    # 把副链表剩余部分接在主链表尾部
+        # return head
+        '''
+        解法3：递归法
+        '''
+        if not l1: return l2
+        if not l2: return l1
+        if l1.val > l2.val: l1, l2 = l2, l1         # 交换l1, l2 简化代码
+        l1.next = self.mergeTwoLists(l1.next, l2)   # 每次将l1链表的当前节点截断，剩下的部分和l2留给后续递归
+        return l1                                   # l1的头结点接上排好序的链表返回
 
 if __name__ == "__main__":
     so = Solution()
-    print(so)
-    root = generate_tree([6,2,8,0,4,7,9,None,None,3,5])
-    node = so.lowestCommonAncestor(root, root.left, root.left.right)
-    print(node.val)
+    print(so.isPalindrome(0))
