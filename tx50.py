@@ -52,6 +52,51 @@ class ListNode:
         self.next = None
 
 
+class MinStack:
+    '''
+    最小栈，要求在常数时间内返回栈的最小值
+    解法1：一个栈，但是不单纯的存储整数，而是存储一个元组，
+    其第一个元素是要存储的整数，第二个元素是记录以来的最小元素
+    '''
+    # def __init__(self):
+    #     self.data = [(None, float('inf'))]        
+
+    # def push(self, x: int) -> None:
+    #     self.data.append((x, min(x, self.data[-1][1])))     # 遇到更小的元素添加进来时，更新元组的第二项
+
+    # def pop(self) -> None:
+    #     if len(self.data) > 1: self.data.pop()
+
+    # def top(self) -> int:
+    #     return self.data[-1][0]
+
+    # def getMin(self) -> int:
+    #     return self.data[-1][1]
+    '''
+    解法2：两个栈，一个正常栈，一个存记录的最小值
+    '''
+    def __init__(self):
+        self.data = []
+        self.mins = []      
+
+    def push(self, x: int) -> None:
+        if self.data:
+            self.mins.append(min(x, self.mins[-1]))
+        else:
+            self.mins.append(x)
+        self.data.append(x)
+
+    def pop(self) -> None:
+        self.data.pop()
+        self.mins.pop()
+
+    def top(self) -> int:
+        if self.data: return self.data[-1]
+
+    def getMin(self) -> int:
+        if self.mins: return self.mins[-1]
+
+
 class Solution(object):
     def findMedianSortedArrays(self, nums1, nums2) -> float:
         '''
@@ -92,18 +137,51 @@ class Solution(object):
     def longestPalindrome(self, s: str) -> str:
         '''
         给定一个字符串 s，找到 s 中最长的回文子串。你可以假设 s 的最大长度为 1000。
-        中心展开方法遍历所有字符串
+        解法1：中心展开方法遍历所有字符串
+        '''
+        # if len(s) < 2: return s
+        # start = end = 0
+        # for i in range(len(s)):
+        #     len1 = getExpandLength(i, i, s)
+        #     len2 = getExpandLength(i, i+1, s)
+        #     maxlen = max(len1, len2)
+        #     if maxlen > end - start:
+        #         start = i - (maxlen-1) // 2
+        #         end = i + maxlen // 2 + 1
+        # return s[start:end]
+        '''
+        解法2：manacher算法
         '''
         if len(s) < 2: return s
-        start = end = 0
+        s = '#' + '#'.join(list(s)) + '#'
+        p = [0 for x in range(len(s))]
+        max_id = -1
+        max_radio = -1
+        c = -1
+        mx = -1
         for i in range(len(s)):
-            len1 = getExpandLength(i, i, s)
-            len2 = getExpandLength(i, i+1, s)
-            maxlen = max(len1, len2)
-            if maxlen > end - start:
-                start = i - (maxlen-1) // 2
-                end = i + maxlen // 2 + 1
-        return s[start:end]
+            if i > mx:
+                radio = getExpandLength(i, i, s) // 2
+                p[i] = radio
+                c = i
+                mx = i + radio
+                if radio > max_radio:
+                    max_id, max_radio = i, radio
+            else:
+                j = 2*c - i
+                if j - p[j] > 2 * c - mx:
+                    p[i] = p[j]
+                elif j - p[j] < 2 * c - mx:
+                    p[i] = mx - i
+                else:
+                    radio = getExpandLength(i, i, s) // 2
+                    p[i] = radio
+                    if i + radio > mx:
+                        c = i
+                        mx = i + radio
+                    if radio > max_radio:
+                        max_id, max_radio = i, radio
+        return s[max_id-max_radio:max_id+max_radio+1].replace('#', '')
 
     def deleteNode(self, node):
         '''
@@ -361,6 +439,119 @@ class Solution(object):
         l1.next = self.mergeTwoLists(l1.next, l2)   # 每次将l1链表的当前节点截断，剩下的部分和l2留给后续递归
         return l1                                   # l1的头结点接上排好序的链表返回
 
+    def maxProfit(self, prices: list) -> int:
+        '''
+        给定一个数组，它的第 i 个元素是一支给定股票第 i 天的价格。如果你最多只允许完成一笔交易（即买入和卖出一支股票），
+        设计一个算法来计算你所能获取的最大利润。注意你不能在买入股票前卖出股票。
+        解法1：暴力搜索
+        '''
+        # profit = 0
+        # for i in range(len(prices) - 1):
+        #     if prices[i] >= prices[i+1]: continue   # 如果是递减部分直接跳过，否则TLE
+        #     for p in prices[i+1:]:
+        #         if p - prices[i] > profit: profit = p - prices[i]
+        # return profit
+        '''
+        解法2：一次遍历，实时更新找到的最小价格，然后将当前价格的差价与最大利润比较，大于就更新
+        '''
+        max_profit = 0
+        min_price = 2**30 -1 + 2**30
+        for p in prices:
+            if p < min_price: min_price = p
+            if p - min_price > max_profit: max_profit = p - min_price
+        return max_profit
+
+    def maxProfitII(self, prices: list) -> int:
+        '''
+        给定一个数组，它的第 i 个元素是一支给定股票第 i 天的价格。
+        设计一个算法来计算你所能获取的最大利润。你可以尽可能地完成更多的交易（多次买卖一支股票）。
+        注意：你不能同时参与多笔交易（你必须在再次购买前出售掉之前的股票）。
+        解法1：常规思路，遍历数组，若明天涨就（继续）持有，跌就抛出（如果买了）
+        '''
+        # if len(prices) < 2: return 0
+        # buy, profit = -1, 0
+        # for i in range(len(prices)-1):
+        #     if prices[i+1] - prices[i] < 0:
+        #         if buy != -1:
+        #             profit += prices[i] - buy
+        #             buy = -1
+        #     else:
+        #         if buy == -1:
+        #             buy = prices[i]
+        # if buy != -1:
+        #     profit += prices[-1] - buy
+        # return profit
+        '''
+        解法2：应为同一天可以多次交易，所以肯定可以利润最大化，直接遍历数组，如果比前一天高，则进行累加
+        '''
+        return sum(b - a for a, b in zip(prices, prices[1:]) if a < b)
+
+    def isPowerOfTwo(self, n: int) -> bool:
+        '''
+        给定一个整数，编写一个函数来判断它是否是 2 的幂次方。
+        解法1：按位循环
+        '''
+        # if n <= 0: return False  # 小于等于0直接False
+        # while n > 1:
+        #     if n & 1: return False
+        #     n = n >> 1
+        # return True
+        '''
+        解法2：在保证n大于0的情况下，n若是2的幂次方，则只有1位为1，与其相差1的数进行按位与运算必为0
+        '''
+        return n > 0 and n & n - 1 == 0
+
+    def climbStairs(self, n: int) -> int:
+        '''
+        假设你正在爬楼梯。需要 n 阶你才能到达楼顶，给定 n 是一个正整数。
+        每次你可以爬 1 或 2 个台阶。你有多少种不同的方法可以爬到楼顶呢？
+        解法1：斐波那契数列，通过归纳可确定结果是一个斐波那契数列数列
+        '''
+        if n < 3: return n
+        a, b = 1, 2
+        for i in range(3, n+1):
+            a, b = b, a+b
+        return b
+
+    def removeDuplicates(self, nums: list) -> int:
+        '''
+        给定一个排序数组，你需要在原地删除重复出现的元素，使得每个元素只出现一次，返回移除后数组的新长度。
+        不要使用额外的数组空间，你必须在原地修改输入数组并在使用 O(1) 额外空间的条件下完成。
+        解法：双指针，一个指针遍历数组，另一个记录非重复数字数量
+        '''
+        j = 0
+        for i in range(1, len(nums)):
+            if nums[i] != nums[i-1]:
+                j += 1
+                #nums[j] = nums[i]
+        return j + 1 if len(nums) else 0
+
+    def merge(self, nums1: list, m: int, nums2: list, n: int) -> None:
+        """
+        Do not return anything, modify nums1 in-place instead.
+        给定两个有序整数数组 nums1 和 nums2，将 nums2 合并到 nums1 中，使得 num1 成为一个有序数组。
+        说明:
+        初始化 nums1 和 nums2 的元素数量分别为 m 和 n。
+        你可以假设 nums1 有足够的空间（空间大小大于或等于 m + n）来保存 nums2 中的元素。
+        解法：对两个列表倒序遍历，谁大就放到nums1队尾中
+        """
+        a = m - 1
+        b = n - 1
+        for i in range(m+n-1, -1, -1):
+            if a >= 0 and b >= 0:
+                if nums1[a] > nums2[b]:
+                    nums1[i] = nums1[a]
+                    a -= 1
+                else:
+                    nums1[i] = nums2[b]
+                    b -= 1
+            elif a < 0:
+                nums1[:i+1] = nums2[:b+1]
+                break
+            
+        
+
 if __name__ == "__main__":
     so = Solution()
-    print(so.isPalindrome(0))
+    res = so.merge([4,5,6,0,0,0], 3, [1,2,3], 3)
+    print(res)
