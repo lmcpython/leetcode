@@ -174,7 +174,7 @@ class Solution(object):
                 elif j - p[j] < 2 * c - mx:
                     p[i] = mx - i
                 else:
-                    radio = getExpandLength(i, i, s) // 2
+                    radio = getExpandLength(i-p[j]-1, i+p[j]+1, s) // 2
                     p[i] = radio
                     if i + radio > mx:
                         c = i
